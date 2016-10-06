@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.springframework.org/schema/beans"
+  xmlns:context="http://www.springframework.org/schema/context"
+  xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+  xmlns:mvc="http://www.springframework.org/schema/mvc"
+  xmlns:task="http://www.springframework.org/schema/task"
+  xmlns:aop="http://www.springframework.org/schema/aop"
+  xmlns:jee="http://www.springframework.org/schema/jee"
+  xmlns:tx="http://www.springframework.org/schema/tx"
+  xmlns:p="http://www.springframework.org/schema/p"
+  xsi:schemaLocation="
+  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+  http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+  http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+  http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
+  http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+  http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+  http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+  <!-- let's keep this xml as clean as posible -->
+  <mvc:annotation-driven />
+  <context:annotation-config />
+  <context:component-scan base-package="rango.vote" />
+
+  <mvc:annotation-driven>
+    <mvc:message-converters>
+      <bean class="org.springframework.http.converter.StringHttpMessageConverter"/>
+      <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter"/>
+    </mvc:message-converters>
+  </mvc:annotation-driven>
+
+  <!-- suporte in-app para as migrações do esquema de banco -->
+  <!-- <jee:jndi-lookup jndi-name="jdbc/rango-vote-ds" id="dataSource" /> -->
+  <bean name="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    <property name="driverClassName" value="org.postgresql.Driver" />
+    <property name="url" value="jdbc:postgresql://localhost:5432/rango-vote" />
+    <property name="username" value="postgres" />
+    <property name="password" value="postgres" />
+  </bean>
+  <bean id="flyway" class="org.flywaydb.core.Flyway" init-method="migrate">
+    <property name="dataSource" ref="dataSource"/>
+  </bean>
+
+  <!-- we'll need tasks to open and close voting -->
+  <!-- <task:annotation-driven executor="myExecutor" scheduler="myScheduler"/>
+  <task:executor id="myExecutor" pool-size="0"/>
+  <task:scheduler id="myScheduler" pool-size="0"/> -->
+
+  <!-- JPA EntityManager injection support -->
+  <bean id="entityManagerFactory"
+    class="org.springframework.orm.jpa.LocalEntityManagerFactoryBean">
+    <property name="persistenceUnitName" value="rango-vote-pu-test" />
+  </bean>
+  <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+    <property name="entityManagerFactory" ref="entityManagerFactory" />
+  </bean>
+  <bean class="org.springframework.orm.jpa.support.PersistenceAnnotationBeanPostProcessor" />
+  <tx:annotation-driven />
+
+  <!-- JavaMail support -->
+  <bean id="mailSender" class ="org.springframework.mail.javamail.JavaMailSenderImpl" >
+    <property name="username" value="rangovote6@gmail.com" />
+    <property name="password" value="********" />
+    <property name="javaMailProperties">
+      <props>
+        <prop key="mail.host">smtp.gmail.com</prop>
+        <prop key="mail.smtp.port">587</prop>
+        <prop key="mail.username">rangovote6@gmail.com</prop>
+        <prop key="mail.password">********</prop>
+        <prop key="mail.transport.protocol">smtp</prop>
+        <prop key="mail.smtp.auth">true</prop>
+        <prop key="mail.smtp.starttls.enable">true</prop>
+        <prop key="mail.from.email">rangovote6@gmail.com</prop>
+      </props>
+    </property>
+  </bean>
+</beans>
